@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String   @unique  
+  username  String   @unique 
+  password  String?  
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt  DateTime? @updatedAt
+
+
+  posts         Post[]        @relation("AuthorPosts")
+  contributions Post[]        @relation("Contributors")
+  comments      Comment[]
+  reactions     Reaction[]
+
+  postVersions PostVersion[]
+  sessions    Session[]
+  tokens      AuthToken[]
+
+  // @@index([firstName]) → index it's equal to make firstName  String    @unique
+  // @@index([firstName, lastName]) → computed inedx
+}
+
+
+model Post {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  isPublished Boolean  @default(false)
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  authorId String
+  author   User   @relation("AuthorPosts", fields: [authorId], references: [id])
+
+  contributors User[] @relation("Contributors")
+
+  versions   PostVersion[]
+  comments   Comment[]
+  reactions  Reaction[]
+  tags       PostTag[]
+}
+
+model Tag {
+  id   String @id @default(uuid())
+  name String @unique
+
+  posts PostTag[]
+}
+
+model PostTag {
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id])
+  tag  Tag  @relation(fields: [tagId], references: [id])
+
+  @@id([postId, tagId])
+}
+
+
+model PostVersion {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  postId String
+  post   Post @relation(fields: [postId], references: [id])
+
+  editorId String
+  editor   User @relation(fields: [editorId], references: [id])
+}
+
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  authorId String
+  author   User @relation(fields: [authorId], references: [id])
+
+  postId String
+  post   Post @relation(fields: [postId], references: [id])
+
+  parentId String?
+  parent   Comment? @relation("CommentThread", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentThread")
+}
+
+
+enum ReactionType {
+  LIKE
+  LOVE
+  CLAP
+  INSIGHTFUL
+}
+
+model Reaction {
+  id   String @id @default(uuid())
+  type ReactionType
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  postId String
+  post   Post @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId, type])
+}
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AuthToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  type      TokenType
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}
+
+enum TokenType {
+  LOGIN
+  RESET_PASSWORD
+  VERIFY_EMAIL
+}
+
+
+
