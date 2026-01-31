@@ -1,5 +1,3 @@
-const { use } = require('react')
-const prisma = require('../../lib/prisma')
 const userRepo = require('../user/user.repo')
 const sessionRepo = require('./session.repo')
 

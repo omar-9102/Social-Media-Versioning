@@ -10,7 +10,7 @@ class UserRepository{
     }
 
     async findById(userId){
-        return await prisma.user.findUnique({where:{userId}})
+        return await prisma.user.findUnique({where:{id: userId}})
     }
 
     async findByEmail(email){

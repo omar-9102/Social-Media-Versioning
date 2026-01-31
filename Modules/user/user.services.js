@@ -1,5 +1,8 @@
 const userRepo = require('./user.repo')
 const crypto = require('node:crypto')
+const authTokenRepo = require('../authToken/authToken.repo')
+require('dotenv').config();
+
 
 class UserServices {
     async register(firstName, lastName, email, username, bio){
@@ -25,14 +28,17 @@ class UserServices {
         if(!existingUser)
             throw new Error("User not found")
 
-        const token = crypto.randomBytes(32).toString('hex')
-        userRepo.createAuthToken({
-            token: token,
+        const rawToken = crypto.randomBytes(32).toString('hex')
+        const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex')
+        const PORT = process.env.PORT
+        const magicLink = ` http://localhost:${PORT}/api/auth/verify?token=${rawToken}`;
+        await authTokenRepo.createAuthToken({
+            token: hashedToken,
             type: 'LOGIN',
             userId: existingUser.id,
             expiresAt: new Date(Date.now() + 15 * 60 * 1000)
         })
-        console.log(`Magic Link: https://localhost:4000/api/auth/verify?token=${token}`)
+        console.log(`Magic Link: ${magicLink}`)
     }
 
     async get(){
@@ -44,7 +50,7 @@ class UserServices {
 
     async getUsersCountedPosts(sid){
         const counted = await userRepo.getUserCountedPosts(sid)
-        if(counted.lenght == 0){
+        if(counted.length == 0){
             throw new Error("User has no posts")
         }
     }
