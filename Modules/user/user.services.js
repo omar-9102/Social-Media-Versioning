@@ -53,6 +53,12 @@ class UserServices {
         if(counted.length == 0){
             throw new Error("User has no posts")
         }
+        return counted
+    }
+
+    async getUserContributions(userId){
+        const contributions = await userRepo.getUserContributions(userId)
+        return contributions
     }
 
 }

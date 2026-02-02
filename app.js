@@ -1,21 +1,26 @@
 require('dotenv').config();
 const express = require("express");
 const prisma = require('./lib/prisma');
-const { PrismaClient } = require('@prisma/client');
 const cookieParser = require('cookie-parser');
+const swaggerUi = require('swagger-ui-express')
+const swaggerSpec = require('./Swagger')
 
 
 const userRoutes = require('./Modules/user/user.routes');
 const authRoutes = require('./Modules/auth/auth.routes');
+const postRoutes = require('./Modules/post/post.routes');
 
 
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+
 
 app.use('/api/users', userRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/post', postRoutes)
 
 
 async function startServer() {

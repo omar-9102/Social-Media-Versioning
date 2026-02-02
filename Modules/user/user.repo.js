@@ -40,6 +40,20 @@ class UserRepository{
         }
         }
     })}
+
+    async getUserContributions(userId){
+        return await prisma.user.findMany({
+            where:{
+                id: userId
+            },
+            select:{
+                firstName: true,
+                lastName: true,
+                createdAt: true,
+                contributions: true
+            }
+        })
+    }
 }
 
 module.exports = new UserRepository()

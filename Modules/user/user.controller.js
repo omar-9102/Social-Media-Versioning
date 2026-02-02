@@ -31,9 +31,20 @@ const getUserCountedPosts = async (req, res, next) =>{
     return res.status(200).json({data: counted})
 }
 
+const getUserContributions = async(req, res, next) =>{
+    try{
+        const id = req.user.id
+        const contributions = await userServices.getUserContributions(id)
+        return res.status(200).json({data: contributions})
+    }catch(error){
+        return next(error)
+    }
+}
+
 module.exports = {
     register,
     getUsers,
     getUserCountedPosts,
-    login
+    login,
+    getUserContributions
 }
