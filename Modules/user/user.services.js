@@ -1,10 +1,21 @@
+require('dotenv').config();
 const userRepo = require('./user.repo')
 const crypto = require('node:crypto')
 const authTokenRepo = require('../authToken/authToken.repo')
-require('dotenv').config();
+const uploadService = require('../../Middlewares/upload.middleware');
+const cloudinary = require('../../config/cloudinary')
 
 
 class UserServices {
+
+    createRawToken(){
+        return crypto.randomBytes(32).toString('hex')
+    }
+
+    createHashedToken(rawToken){
+        return crypto.createHash('sha256').update(rawToken).digest('hex')
+    }
+
     async register(firstName, lastName, email, username, bio){
         const existingUser = await userRepo.findByEmail(email)
         if(existingUser)
@@ -16,11 +27,43 @@ class UserServices {
 
         const userEmail = email.toLowerCase();
         return userRepo.register({
-            firstName: firstName, 
-            lastName: lastName,
+            firstName, 
+            lastName,
             email: userEmail,
-            username: username,
-            bio: bio})
+            username,
+            bio,
+        })
+    }
+
+    async mediaUploads(userId, files){
+        const user = await userRepo.findById(userId)
+        if(!user) throw new Error("User not found")
+
+        let profileImage = null;
+        let coverImage = null;
+        const profileOption = `users/${userId}/profile`
+        const coverOption = `users/${userId}/cover`
+
+        if(files?.profileImage?.[0]){
+            if(user.profileImageId)
+                await cloudinary.uploader.destroy(user.profileImageId)
+
+            profileImage = await uploadService.uploadFile(files.profileImage[0], profileOption);
+        }
+
+        if(files?.coverImage?.[0]){
+            if(user.coverImageId)
+                await cloudinary.uploader.destroy(user.coverImageId)
+
+            coverImage = await uploadService.uploadFile(files.coverImage[0], coverOption);
+        }
+
+        return userRepo.updateById(userId,{
+            profileImage: profileImage?.url ?? user.profileImage,
+            profileImageId: profileImage?.publicId ?? user.profileImageId,
+            coverImage: coverImage?.url ?? user.coverImage,
+            coverImageId: coverImage?.publicId ?? user.coverImageId,
+        })
     }
 
     async login(email){
@@ -28,8 +71,8 @@ class UserServices {
         if(!existingUser)
             throw new Error("User not found")
 
-        const rawToken = crypto.randomBytes(32).toString('hex')
-        const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex')
+        const rawToken = this.createRawToken()
+        const hashedToken = this.createHashedToken(rawToken)
         const PORT = process.env.PORT
         const magicLink = ` http://localhost:${PORT}/api/auth/verify?token=${rawToken}`;
         await authTokenRepo.createAuthToken({

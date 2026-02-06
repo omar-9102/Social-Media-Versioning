@@ -32,6 +32,10 @@ class PostsRepository{
             orderBy: {createdAt: 'desc'}
         })
     }
+
+    async contribute(userId, data){
+        return 
+    }
 }
 
 module.exports = new PostsRepository()

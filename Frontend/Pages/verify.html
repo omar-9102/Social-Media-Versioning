@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Verify Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../CSS/main.css">
+</head>
+<body>
+  <div class="card">
+    <h1>Verify Login</h1>
+    <p class="desc">Paste your token to start a session.</p>
+
+    <form id="form">
+      <div class="grid">
+        <div class="full">
+          <label>Token</label>
+          <input name="token" type="text" required placeholder="paste token from magic link">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="submit">Verify</button>
+        <a class="ghost" href="login.html">Back to Login</a>
+      </div>
+
+      <div class="msg" id="msg"></div>
+    </form>
+
+    <p class="small">Endpoint: GET /api/auth/verify?token=...</p>
+  </div>
+
+  <script src="../Js/config.js"></script>
+  <script src="../Js/verify.js"></script>
+</body>
+</html>

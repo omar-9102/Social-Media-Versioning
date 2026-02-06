@@ -9,6 +9,13 @@ class UserRepository{
         return await prisma.authToken.create({data:userdata,})
     }
 
+    async updateById(userId, data) {
+        return await prisma.user.update({
+            where: { id: userId },
+            data 
+        });
+    }
+
     async findById(userId){
         return await prisma.user.findUnique({where:{id: userId}})
     }

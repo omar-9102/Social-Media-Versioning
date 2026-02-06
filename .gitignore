@@ -6,5 +6,7 @@ node_modules
 
 server.js
 console.js
-notes.txt
-
+Prisma Initialization.txt
+Multer & Cloudinary Initialization.txt
+prompt.txt
+GEMINI.md

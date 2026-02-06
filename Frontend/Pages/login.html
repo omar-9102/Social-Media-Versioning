@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../CSS/main.css">
+</head>
+<body>
+  <div class="card">
+    <h1>Login</h1>
+    <p class="desc">Enter your email to receive a magic link.</p>
+
+    <form id="form">
+      <div class="grid">
+        <div class="full">
+          <label>Email</label>
+          <input name="email" type="email" required placeholder="omar@example.com">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="submit">Send Magic Link</button>
+        <a class="ghost" href="register.html">Register</a>
+      </div>
+
+      <div class="msg" id="msg"></div>
+    </form>
+
+    <p class="small">
+      After submitting, check your server console for the magic link.
+      Or paste the token below on the verify page.
+    </p>
+    <p class="small">
+      <a href="verify.html">Go to Verify</a>
+    </p>
+  </div>
+
+  <script src="../Js/config.js"></script>
+  <script src="../Js/login.js"></script>
+</body>
+</html>

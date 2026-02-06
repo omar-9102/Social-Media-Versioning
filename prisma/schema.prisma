@@ -7,105 +7,140 @@ datasource db {
 }
 
 
-enum Role{
+enum Role {
   USER
   ADMIN
 }
 
 model User {
-  id        String   @id @default(uuid())
-  firstName String
-  lastName  String
-  email     String   @unique  
-  username  String   @unique 
-  password  String?  
-  bio       String?
-  createdAt DateTime @default(now())
-  updatedAt  DateTime? @updatedAt
-  role       Role       @default(USER)
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String   @unique
+  username     String   @unique
+  bio          String?
+  // Media Support للبروفايل
+  profileImage String?  // URL من Cloudinary
+  profileImageId  String?
+  coverImage   String?  // URL من Cloudinary
+  coverImageId  String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  role         Role     @default(USER)
 
+  posts        Post[]
+  comments     Comment[]
+  reactions    Reaction[]
+  sessions     Session[]
+  tokens       AuthToken[]
+  following    Follow[] @relation("following")
+  followers    Follow[] @relation("followers")
 
-  posts         Post[]        @relation("AuthorPosts")
-  contributions Post[]        @relation("Contributors")
-  comments      Comment[]
-  reactions     Reaction[]
-
-  postVersions PostVersion[]
-  sessions    Session[]
-  tokens      AuthToken[]
-
-  // @@index([firstName]) → index it's equal to make firstName  String    @unique
-  // @@index([firstName, lastName]) → computed inedx
+  @@index([username])
 }
 
-
-model Post {
-  id          String   @id @default(uuid())
-  title       String
-  slug        String   @unique
-  content     String?   @db.Text  // النسخة الحالية "النشطة" (Latest Snapshot)
-  isPublished Boolean  @default(false)
-  deletedAt   DateTime?
+model Follow {
+  followerId  String
+  followingId String
   createdAt   DateTime @default(now())
 
-  authorId String
-  author   User   @relation("AuthorPosts", fields: [authorId], references: [id])
+  follower    User @relation("following", fields: [followerId], references: [id])
+  following   User @relation("followers", fields: [followingId], references: [id])
 
-  contributors User[] @relation("Contributors")
-
-  versions   PostVersion[]
-  comments   Comment[]
-  reactions  Reaction[]
-  tags       PostTag[]
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
-model Tag {
-  id   String @id @default(uuid())
-  name String @unique
-
-  posts PostTag[]
+enum PostType {
+  POST
+  QUOTE
+  REPOST
+  REPLY
 }
 
-model PostTag {
-  postId String
-  tagId  String
-
-  post Post @relation(fields: [postId], references: [id])
-  tag  Tag  @relation(fields: [tagId], references: [id])
-
-  @@id([postId, tagId])
+enum MediaType {
+  IMAGE
+  VIDEO
 }
 
+model Post {
+  id             Int       @id @default(autoincrement())
+  content        String?   @db.Text
+  type           PostType  @default(POST)
+  
+  // Media Support للبوستات
+  media          PostMedia[]
 
-model PostVersion {
-  id        String   @id @default(uuid())
-  content   String
-  createdAt DateTime @default(now())
 
-  postId String
-  post   Post @relation(fields: [postId], references: [id])
+  // Soft Delete
+  deletedAt      DateTime? 
 
-  editorId String
-  editor   User @relation(fields: [editorId], references: [id])
+  // Counters (Optimization)
+  likesCount     Int       @default(0)
+  repostsCount   Int       @default(0)
+  repliesCount   Int       @default(0)
+
+  createdAt      DateTime  @default(now())
+  authorId       String
+  author         User      @relation(fields: [authorId], references: [id])
+
+  // Threading Logic
+  parentId       Int?
+  parent         Post?     @relation("Thread", fields: [parentId], references: [id])
+  replies        Post[]    @relation("Thread")
+
+  rootId         Int?
+  root           Post?     @relation("RootPost", fields: [rootId], references: [id])
+  thread         Post[]    @relation("RootPost")
+
+  // Sharing Logic
+  originalPostId Int?
+  originalPost   Post?     @relation("Shares", fields: [originalPostId], references: [id])
+  shares         Post[]    @relation("Shares")
+
+  reactions      Reaction[]
+  comments       Comment[]
+
+  @@index([authorId])
+  @@index([rootId])
+  @@index([parentId])
 }
 
+model PostMedia {
+  id           String   @id @default(uuid())
+
+  url          String
+  publicId     String
+  type         MediaType
+  order        Int      @default(0)
+
+  postId       Int
+  post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+
+  @@index([postId])
+}
 
 model Comment {
   id        String   @id @default(uuid())
   content   String
+  mediaUrl  String?  // إضافة ميديا للكومنت بناءً على طلبك
   createdAt DateTime @default(now())
+  deletedAt DateTime? // Soft delete للكومنتات أيضاً
 
-  authorId String
-  author   User @relation(fields: [authorId], references: [id])
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
 
-  postId String
-  post   Post @relation(fields: [postId], references: [id])
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id])
 
-  parentId String?
-  parent   Comment? @relation("CommentThread", fields: [parentId], references: [id])
-  replies  Comment[] @relation("CommentThread")
+  parentId  String?
+  parent    Comment? @relation("CommentThread", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentThread")
 }
-
 
 enum ReactionType {
   LIKE
@@ -121,11 +156,12 @@ model Reaction {
   userId String
   user   User @relation(fields: [userId], references: [id])
 
-  postId String
+  postId Int
   post   Post @relation(fields: [postId], references: [id])
 
-  @@unique([userId, postId, type])
+  @@unique([userId, postId])
 }
+
 model Session {
   id        String   @id @default(uuid())
   userId    String

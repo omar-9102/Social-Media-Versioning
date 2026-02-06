@@ -10,6 +10,19 @@ const register = async(req, res, next) =>{
     }
 }
 
+const uploadImages = async (req, res) => {
+    console.log('in controller')
+    try {
+        const userId = req.user.id;
+        console.log(userId)
+        console.log(req.files)
+        const result = await userServices.mediaUploads(userId,req.files);
+        res.json({message: 'Images updated successfully',data: result,});
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
 const login = async(req, res, next) =>{
     try{
         const {email} = req.body
@@ -46,5 +59,6 @@ module.exports = {
     getUsers,
     getUserCountedPosts,
     login,
-    getUserContributions
+    getUserContributions,
+    uploadImages
 }
